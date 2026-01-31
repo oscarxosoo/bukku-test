@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(composer require:*)",
+      "Bash(./vendor/bin/sail composer require:*)",
+      "Bash(docker compose exec:*)",
+      "Bash(./vendor/bin/sail artisan migrate:*)",
+      "Bash(./vendor/bin/sail artisan route:list:*)",
+      "Bash(./vendor/bin/sail artisan config:clear:*)",
+      "Bash(./vendor/bin/sail artisan:*)"
+    ]
+  }
+}
