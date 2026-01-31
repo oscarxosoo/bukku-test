@@ -2,8 +2,6 @@
 
 namespace App\DataTransferObjects;
 
-use Illuminate\Http\Request;
-
 class ListTransactionFilter
 {
     public function __construct(
@@ -11,11 +9,11 @@ class ListTransactionFilter
         public readonly ?int $productId = null,
     ) {}
 
-    public static function fromRequest(Request $request): self
+    public static function fromArray(array $data): self
     {
         return new self(
-            type: $request->query('type'),
-            productId: $request->query('product_id') ? (int) $request->query('product_id') : null,
+            type: $data['type'] ?? null,
+            productId: isset($data['product_id']) ? (int) $data['product_id'] : null,
         );
     }
 }
