@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use App\DataTransferObjects\CreateTransactionData;
 use App\DataTransferObjects\ListTransactionFilter;
 use App\Exceptions\BusinessValidationException;
+use App\Http\Requests\ListTransactionRequest;
 use App\Http\Requests\StoreTransactionRequest;
 use App\Services\Transactions\TransactionService;
 use App\UseCases\Transactions\CreateTransactionUseCase;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
@@ -18,9 +18,9 @@ class TransactionController extends Controller
         private TransactionService $transactionService
     ) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(ListTransactionRequest $request): JsonResponse
     {
-        $filter = ListTransactionFilter::fromRequest($request);
+        $filter = ListTransactionFilter::fromArray($request->validated());
         $transactions = $this->transactionService->list($filter);
 
         return response()->json([
