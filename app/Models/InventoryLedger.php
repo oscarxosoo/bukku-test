@@ -23,7 +23,7 @@ class InventoryLedger extends Model
 
     protected $casts = [
         'quantity_on_hand' => 'integer',
-        'average_cost_per_unit' => 'decimal:4',
+        'average_cost_per_unit' => 'decimal:2',
         'total_inventory_value' => 'decimal:2',
         'cost_of_goods_sold' => 'decimal:2',
     ];
