@@ -18,8 +18,7 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth.jwt')->group(function () {
+    Route::get('transactions', [TransactionController::class, 'index']);
     Route::post('transactions', [TransactionController::class, 'store']);
-    Route::get('transactions/purchases', [TransactionController::class, 'purchases']);
-    Route::get('transactions/sales', [TransactionController::class, 'sales']);
 });
 

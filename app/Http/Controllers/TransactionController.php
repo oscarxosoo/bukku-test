@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\DataTransferObjects\CreateTransactionData;
+use App\DataTransferObjects\ListTransactionFilter;
 use App\Exceptions\BusinessValidationException;
 use App\Http\Requests\StoreTransactionRequest;
 use App\Services\Transactions\TransactionService;
 use App\UseCases\Transactions\CreateTransactionUseCase;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class TransactionController extends Controller
 {
@@ -15,6 +17,16 @@ class TransactionController extends Controller
         private CreateTransactionUseCase $createTransactionUseCase,
         private TransactionService $transactionService
     ) {}
+
+    public function index(Request $request): JsonResponse
+    {
+        $filter = ListTransactionFilter::fromRequest($request);
+        $transactions = $this->transactionService->list($filter);
+
+        return response()->json([
+            'data' => $transactions,
+        ]);
+    }
 
     public function store(StoreTransactionRequest $request): JsonResponse
     {
@@ -34,23 +46,5 @@ class TransactionController extends Controller
                 ],
             ], 422);
         }
-    }
-
-    public function purchases(): JsonResponse
-    {
-        $purchases = $this->transactionService->listPurchases();
-
-        return response()->json([
-            'data' => $purchases,
-        ]);
-    }
-
-    public function sales(): JsonResponse
-    {
-        $sales = $this->transactionService->listSales();
-
-        return response()->json([
-            'data' => $sales,
-        ]);
     }
 }
