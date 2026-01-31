@@ -15,11 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->enum('transaction_type', ['purchase', 'sale']);
-            $table->date('transaction_date')->unique();
+            $table->date('transaction_date');
             $table->unsignedInteger('quantity');
             $table->decimal('unit_price', 15, 2);
             $table->timestamps();
             $table->softDeletes();
+
+            $table->unique(['product_id', 'transaction_date']);
         });
     }
 

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('transaction_id')->unique()->constrained('transactions');
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->unsignedInteger('quantity_on_hand');
-            $table->decimal('average_cost_per_unit', 15, 4);
+            $table->decimal('average_cost_per_unit', 15, 2);
             $table->decimal('total_inventory_value', 15, 2);
             $table->decimal('cost_of_goods_sold', 15, 2)->nullable();
             $table->timestamps();
