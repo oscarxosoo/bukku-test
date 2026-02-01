@@ -113,8 +113,8 @@ class RecalculateLedgerService
         if ($transaction->transaction_type === TransactionConstants::TYPE_PURCHASE) {
             $newQuantity = $previousQuantity + $transaction->quantity;
             $addedValue = $transaction->quantity * $transaction->unit_price;
-            $newTotalValue = $previousTotalValue + $addedValue;
-            $newAverageCost = $newQuantity > 0 ? $newTotalValue / $newQuantity : 0;
+            $newTotalValue = round($previousTotalValue + $addedValue, 2);
+            $newAverageCost = $newQuantity > 0 ? round($newTotalValue / $newQuantity, 2) : 0;
 
             return new LedgerCalculationResult(
                 quantityOnHand: $newQuantity,
@@ -125,9 +125,9 @@ class RecalculateLedgerService
         }
 
         // Sale
-        $costOfGoodsSold = $transaction->quantity * $previousAverageCost;
+        $costOfGoodsSold = round($transaction->quantity * $previousAverageCost, 2);
         $newQuantity = $previousQuantity - $transaction->quantity;
-        $newTotalValue = $previousTotalValue - $costOfGoodsSold;
+        $newTotalValue = round($previousTotalValue - $costOfGoodsSold, 2);
 
         if ($newQuantity === 0) {
             return new LedgerCalculationResult(

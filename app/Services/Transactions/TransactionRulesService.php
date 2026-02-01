@@ -75,7 +75,7 @@ class TransactionRulesService
                     throw new BusinessValidationException(
                         sprintf(
                             'This transaction would cause negative stock on %s. Available at that date: %d, Requested: %d.',
-                            $transaction->transaction_date->format('Y-m-d'),
+                            $transaction->transaction_date,
                             $currentQuantity + $transaction->quantity,
                             $transaction->quantity
                         ),

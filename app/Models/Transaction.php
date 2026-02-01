@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Carbon;
 
 class Transaction extends Model
 {
@@ -25,14 +23,6 @@ class Transaction extends Model
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
     ];
-
-    protected function transactionDate(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => Carbon::parse($value)->format('Y-m-d'),
-            set: fn ($value) => Carbon::parse($value)->format('Y-m-d'),
-        );
-    }
 
     public function product(): BelongsTo
     {
