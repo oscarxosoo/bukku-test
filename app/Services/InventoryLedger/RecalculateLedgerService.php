@@ -62,48 +62,6 @@ class RecalculateLedgerService
         }
     }
 
-    /**
-     * Recalculate ALL ledger entries for a product from scratch.
-     * Useful after delete operations.
-     */
-    public function recalculateAll(int $productId): void
-    {
-        // Delete all ledger entries for this product
-        InventoryLedger::where('product_id', $productId)->forceDelete();
-
-        // Get all transactions ordered by date
-        $transactions = Transaction::where('product_id', $productId)
-            ->orderBy('transaction_date')
-            ->orderBy('id')
-            ->get();
-
-        $currentQuantity = 0;
-        $currentTotalValue = 0;
-        $currentAverageCost = 0;
-
-        foreach ($transactions as $transaction) {
-            $result = $this->calculateForTransaction(
-                $transaction,
-                $currentQuantity,
-                $currentTotalValue,
-                $currentAverageCost
-            );
-
-            InventoryLedger::create([
-                'transaction_id' => $transaction->id,
-                'product_id' => $transaction->product_id,
-                'quantity_on_hand' => $result->quantityOnHand,
-                'average_cost_per_unit' => $result->averageCostPerUnit,
-                'total_inventory_value' => $result->totalInventoryValue,
-                'cost_of_goods_sold' => $result->costOfGoodsSold,
-            ]);
-
-            $currentQuantity = $result->quantityOnHand;
-            $currentTotalValue = $result->totalInventoryValue;
-            $currentAverageCost = $result->averageCostPerUnit;
-        }
-    }
-
     private function calculateForTransaction(
         Transaction $transaction,
         int $previousQuantity,
