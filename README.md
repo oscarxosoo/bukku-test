@@ -28,6 +28,8 @@ make setup
 
 App will be running at `http://localhost`
 
+API Documentation available at `http://localhost/docs/api`
+
 ## Manual Setup
 
 ```bash
