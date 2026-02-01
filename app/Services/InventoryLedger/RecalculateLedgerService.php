@@ -2,13 +2,14 @@
 
 namespace App\Services\InventoryLedger;
 
-use App\Constants\TransactionConstants;
-use App\DataTransferObjects\LedgerCalculationResult;
 use App\Models\InventoryLedger;
 use App\Models\Transaction;
 
 class RecalculateLedgerService
 {
+    public function __construct(
+        private CalculateWacService $calculateWacService
+    ) {}
 
     /**
      * Recalculate all ledger entries for a product from a specific date.
@@ -39,8 +40,10 @@ class RecalculateLedgerService
         $currentAverageCost = $previousLedger?->average_cost_per_unit ?? 0;
 
         foreach ($transactions as $transaction) {
-            $result = $this->calculateForTransaction(
-                $transaction,
+            $result = $this->calculateWacService->calculate(
+                $transaction->transaction_type,
+                $transaction->quantity,
+                $transaction->unit_price,
                 $currentQuantity,
                 $currentTotalValue,
                 $currentAverageCost
@@ -60,47 +63,5 @@ class RecalculateLedgerService
             $currentTotalValue = $result->totalInventoryValue;
             $currentAverageCost = $result->averageCostPerUnit;
         }
-    }
-
-    private function calculateForTransaction(
-        Transaction $transaction,
-        int $previousQuantity,
-        float $previousTotalValue,
-        float $previousAverageCost
-    ): LedgerCalculationResult {
-        if ($transaction->transaction_type === TransactionConstants::TYPE_PURCHASE) {
-            $newQuantity = $previousQuantity + $transaction->quantity;
-            $addedValue = $transaction->quantity * $transaction->unit_price;
-            $newTotalValue = round($previousTotalValue + $addedValue, 2);
-            $newAverageCost = $newQuantity > 0 ? round($newTotalValue / $newQuantity, 2) : 0;
-
-            return new LedgerCalculationResult(
-                quantityOnHand: $newQuantity,
-                averageCostPerUnit: $newAverageCost,
-                totalInventoryValue: $newTotalValue,
-                costOfGoodsSold: null,
-            );
-        }
-
-        // Sale
-        $costOfGoodsSold = round($transaction->quantity * $previousAverageCost, 2);
-        $newQuantity = $previousQuantity - $transaction->quantity;
-        $newTotalValue = round($previousTotalValue - $costOfGoodsSold, 2);
-
-        if ($newQuantity === 0) {
-            return new LedgerCalculationResult(
-                quantityOnHand: 0,
-                averageCostPerUnit: 0,
-                totalInventoryValue: 0,
-                costOfGoodsSold: $costOfGoodsSold,
-            );
-        }
-
-        return new LedgerCalculationResult(
-            quantityOnHand: $newQuantity,
-            averageCostPerUnit: $previousAverageCost,
-            totalInventoryValue: $newTotalValue,
-            costOfGoodsSold: $costOfGoodsSold,
-        );
     }
 }
