@@ -28,6 +28,9 @@ class TransactionController extends Controller
         ]);
     }
 
+    /**
+     * @throws BusinessValidationException
+     */
     public function store(StoreTransactionRequest $request): JsonResponse
     {
         try {

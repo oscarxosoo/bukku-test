@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\BusinessValidationException;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\JwtAuthenticate;
 use Illuminate\Foundation\Application;
@@ -23,5 +24,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (BusinessValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => [
+                    $e->getField() => [$e->getMessage()],
+                ],
+            ], 422);
+        });
     })->create();
