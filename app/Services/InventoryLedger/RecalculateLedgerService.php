@@ -2,13 +2,15 @@
 
 namespace App\Services\InventoryLedger;
 
-use App\Models\InventoryLedger;
-use App\Models\Transaction;
+use App\Repositories\InventoryLedgerRepository;
+use App\Repositories\TransactionRepository;
 
 class RecalculateLedgerService
 {
     public function __construct(
-        private CalculateWacService $calculateWacService
+        private CalculateWacService $calculateWacService,
+        private InventoryLedgerRepository $ledgerRepository,
+        private TransactionRepository $transactionRepository
     ) {}
 
     /**
@@ -17,24 +19,12 @@ class RecalculateLedgerService
      */
     public function recalculateFromDate(int $productId, string $fromDate): void
     {
-        // Get the ledger state BEFORE the affected date
-        $previousLedger = InventoryLedger::whereHas('transaction', function ($query) use ($productId, $fromDate) {
-            $query->where('product_id', $productId)->where('transaction_date', '<', $fromDate);
-        })->orderByDesc('id')->first();
+        $previousLedger = $this->ledgerRepository->getLastLedgerBeforeDate($productId, $fromDate);
 
-        // Delete all ledger entries from the affected date onwards for this product
-        InventoryLedger::whereHas('transaction', function ($query) use ($productId, $fromDate) {
-            $query->where('product_id', $productId)->where('transaction_date', '>=', $fromDate);
-        })->forceDelete();
+        $this->ledgerRepository->deleteFromDateOnwards($productId, $fromDate);
 
-        // Get all transactions from the affected date onwards, ordered by date
-        $transactions = Transaction::where('product_id', $productId)
-            ->where('transaction_date', '>=', $fromDate)
-            ->orderBy('transaction_date')
-            ->orderBy('id')
-            ->get();
+        $transactions = $this->transactionRepository->getFromDateOnwards($productId, $fromDate);
 
-        // Recalculate and create ledger entries in order
         $currentQuantity = $previousLedger?->quantity_on_hand ?? 0;
         $currentTotalValue = $previousLedger?->total_inventory_value ?? 0;
         $currentAverageCost = $previousLedger?->average_cost_per_unit ?? 0;
@@ -49,7 +39,7 @@ class RecalculateLedgerService
                 $currentAverageCost
             );
 
-            InventoryLedger::create([
+            $this->ledgerRepository->create([
                 'transaction_id' => $transaction->id,
                 'product_id' => $transaction->product_id,
                 'quantity_on_hand' => $result->quantityOnHand,
@@ -58,7 +48,6 @@ class RecalculateLedgerService
                 'cost_of_goods_sold' => $result->costOfGoodsSold,
             ]);
 
-            // Update running totals for next iteration
             $currentQuantity = $result->quantityOnHand;
             $currentTotalValue = $result->totalInventoryValue;
             $currentAverageCost = $result->averageCostPerUnit;
