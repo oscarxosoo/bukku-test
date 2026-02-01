@@ -6,7 +6,7 @@ use App\Constants\TransactionConstants;
 use App\DataTransferObjects\CreateTransactionData;
 use App\Exceptions\BusinessValidationException;
 use App\Models\Transaction;
-use App\Services\InventoryLedger\InventoryLedgerService;
+use App\Services\InventoryLedger\RecalculateLedgerService;
 use App\Services\Transactions\TransactionRulesService;
 use App\Services\Transactions\TransactionService;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +15,7 @@ class CreateTransactionUseCase
 {
     public function __construct(
         private TransactionService $transactionService,
-        private InventoryLedgerService $inventoryLedgerService,
+        private RecalculateLedgerService $recalculateLedgerService,
         private TransactionRulesService $transactionRulesService
     ) {}
 
@@ -25,15 +25,26 @@ class CreateTransactionUseCase
     public function execute(CreateTransactionData $data): Transaction
     {
         try {
-            $this->transactionRulesService->validateDateSequence($data->productId, $data->transactionDate);
-
+            // Pre-validate stock at date for sales
             if ($data->transactionType === TransactionConstants::TYPE_SALE) {
-                $this->transactionRulesService->validateSufficientStock($data->productId, $data->quantity);
+                $this->transactionRulesService->validateSufficientStockAtDate(
+                    $data->productId,
+                    $data->quantity,
+                    $data->transactionDate
+                );
             }
 
             return DB::transaction(function () use ($data) {
                 $transaction = $this->transactionService->create($data->toArray());
-                $this->inventoryLedgerService->createFromTransaction($transaction);
+
+                // Validate no negative stock after this transaction
+                $this->transactionRulesService->validateNoNegativeStock($data->productId);
+
+                // Recalculate all ledger entries from this date forward
+                $this->recalculateLedgerService->recalculateFromDate(
+                    $data->productId,
+                    $data->transactionDate
+                );
 
                 return $transaction->load('inventoryLedger');
             });

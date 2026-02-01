@@ -2,6 +2,7 @@
 
 namespace App\Services\Transactions;
 
+use App\Constants\TransactionConstants;
 use App\Exceptions\BusinessValidationException;
 use App\Models\InventoryLedger;
 use App\Models\Transaction;
@@ -9,45 +10,79 @@ use App\Models\Transaction;
 class TransactionRulesService
 {
     /**
+     * Validate sufficient stock at a specific date for a sale.
+     * Calculates what the stock would be just before the given date.
+     *
      * @throws BusinessValidationException
      */
-    public function validateDateSequence(int $productId, string $transactionDate): void
+    public function validateSufficientStockAtDate(int $productId, int $quantity, string $transactionDate): void
     {
-        $latestTransaction = Transaction::where('product_id', $productId)
-            ->orderBy('transaction_date', 'desc')
-            ->first();
+        $stockAtDate = $this->calculateStockAtDate($productId, $transactionDate);
 
-        if ($latestTransaction && $transactionDate <= $latestTransaction->transaction_date->format('Y-m-d')) {
+        if ($stockAtDate === 0) {
             throw new BusinessValidationException(
-                sprintf('Transaction date must be after the latest transaction date (%s) for this product.', $latestTransaction->transaction_date->format('Y-m-d')),
-                'transaction_date'
+                'Inventory is empty at this date. No stock available for this product.',
+                'quantity'
+            );
+        }
+
+        if ($quantity > $stockAtDate) {
+            throw new BusinessValidationException(
+                sprintf('Insufficient stock at this date. Available: %d, Requested: %d.', $stockAtDate, $quantity),
+                'quantity'
             );
         }
     }
 
     /**
-     * @throws BusinessValidationException
+     * Calculate what the stock would be just before a specific date.
      */
-    public function validateSufficientStock(int $productId, int $quantity): void
+    private function calculateStockAtDate(int $productId, string $date): int
     {
-        $latestLedger = InventoryLedger::where('product_id', $productId)
-            ->latest('id')
+        // Get the last ledger entry before this date
+        $ledgerBeforeDate = InventoryLedger::whereHas('transaction', function ($query) use ($productId, $date) {
+            $query->where('product_id', $productId)
+                ->where('transaction_date', '<', $date);
+        })
+            ->orderByDesc('id')
             ->first();
 
-        $availableQuantity = $latestLedger?->quantity_on_hand ?? 0;
+        return $ledgerBeforeDate?->quantity_on_hand ?? 0;
+    }
 
-        if ($availableQuantity === 0) {
-            throw new BusinessValidationException(
-                'Inventory is empty. No stock available for this product.',
-                'quantity'
-            );
-        }
+    /**
+     * Validate that recalculation won't cause negative stock.
+     * Call this AFTER inserting/updating a transaction but BEFORE committing.
+     *
+     * @throws BusinessValidationException
+     */
+    public function validateNoNegativeStock(int $productId): void
+    {
+        $transactions = Transaction::where('product_id', $productId)
+            ->orderBy('transaction_date')
+            ->orderBy('id')
+            ->get();
 
-        if ($quantity > $availableQuantity) {
-            throw new BusinessValidationException(
-                sprintf('Insufficient stock. Available: %d, Requested: %d.', $availableQuantity, $quantity),
-                'quantity'
-            );
+        $currentQuantity = 0;
+
+        foreach ($transactions as $transaction) {
+            if ($transaction->transaction_type === TransactionConstants::TYPE_PURCHASE) {
+                $currentQuantity += $transaction->quantity;
+            } else {
+                $currentQuantity -= $transaction->quantity;
+
+                if ($currentQuantity < 0) {
+                    throw new BusinessValidationException(
+                        sprintf(
+                            'This transaction would cause negative stock on %s. Available at that date: %d, Requested: %d.',
+                            $transaction->transaction_date->format('Y-m-d'),
+                            $currentQuantity + $transaction->quantity,
+                            $transaction->quantity
+                        ),
+                        'quantity'
+                    );
+                }
+            }
         }
     }
 }
