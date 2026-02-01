@@ -3,6 +3,7 @@
 namespace App\Services\InventoryLedger;
 
 use App\Constants\TransactionConstants;
+use App\DataTransferObjects\LedgerCalculationResult;
 use App\Models\InventoryLedger;
 use App\Models\Transaction;
 
@@ -48,16 +49,16 @@ class RecalculateLedgerService
             InventoryLedger::create([
                 'transaction_id' => $transaction->id,
                 'product_id' => $transaction->product_id,
-                'quantity_on_hand' => $result['quantity_on_hand'],
-                'average_cost_per_unit' => $result['average_cost_per_unit'],
-                'total_inventory_value' => $result['total_inventory_value'],
-                'cost_of_goods_sold' => $result['cost_of_goods_sold'],
+                'quantity_on_hand' => $result->quantityOnHand,
+                'average_cost_per_unit' => $result->averageCostPerUnit,
+                'total_inventory_value' => $result->totalInventoryValue,
+                'cost_of_goods_sold' => $result->costOfGoodsSold,
             ]);
 
             // Update running totals for next iteration
-            $currentQuantity = $result['quantity_on_hand'];
-            $currentTotalValue = $result['total_inventory_value'];
-            $currentAverageCost = $result['average_cost_per_unit'];
+            $currentQuantity = $result->quantityOnHand;
+            $currentTotalValue = $result->totalInventoryValue;
+            $currentAverageCost = $result->averageCostPerUnit;
         }
     }
 
@@ -91,15 +92,15 @@ class RecalculateLedgerService
             InventoryLedger::create([
                 'transaction_id' => $transaction->id,
                 'product_id' => $transaction->product_id,
-                'quantity_on_hand' => $result['quantity_on_hand'],
-                'average_cost_per_unit' => $result['average_cost_per_unit'],
-                'total_inventory_value' => $result['total_inventory_value'],
-                'cost_of_goods_sold' => $result['cost_of_goods_sold'],
+                'quantity_on_hand' => $result->quantityOnHand,
+                'average_cost_per_unit' => $result->averageCostPerUnit,
+                'total_inventory_value' => $result->totalInventoryValue,
+                'cost_of_goods_sold' => $result->costOfGoodsSold,
             ]);
 
-            $currentQuantity = $result['quantity_on_hand'];
-            $currentTotalValue = $result['total_inventory_value'];
-            $currentAverageCost = $result['average_cost_per_unit'];
+            $currentQuantity = $result->quantityOnHand;
+            $currentTotalValue = $result->totalInventoryValue;
+            $currentAverageCost = $result->averageCostPerUnit;
         }
     }
 
@@ -108,19 +109,19 @@ class RecalculateLedgerService
         int $previousQuantity,
         float $previousTotalValue,
         float $previousAverageCost
-    ): array {
+    ): LedgerCalculationResult {
         if ($transaction->transaction_type === TransactionConstants::TYPE_PURCHASE) {
             $newQuantity = $previousQuantity + $transaction->quantity;
             $addedValue = $transaction->quantity * $transaction->unit_price;
             $newTotalValue = $previousTotalValue + $addedValue;
             $newAverageCost = $newQuantity > 0 ? $newTotalValue / $newQuantity : 0;
 
-            return [
-                'quantity_on_hand' => $newQuantity,
-                'average_cost_per_unit' => $newAverageCost,
-                'total_inventory_value' => $newTotalValue,
-                'cost_of_goods_sold' => null,
-            ];
+            return new LedgerCalculationResult(
+                quantityOnHand: $newQuantity,
+                averageCostPerUnit: $newAverageCost,
+                totalInventoryValue: $newTotalValue,
+                costOfGoodsSold: null,
+            );
         }
 
         // Sale
@@ -129,19 +130,19 @@ class RecalculateLedgerService
         $newTotalValue = $previousTotalValue - $costOfGoodsSold;
 
         if ($newQuantity === 0) {
-            return [
-                'quantity_on_hand' => 0,
-                'average_cost_per_unit' => 0,
-                'total_inventory_value' => 0,
-                'cost_of_goods_sold' => $costOfGoodsSold,
-            ];
+            return new LedgerCalculationResult(
+                quantityOnHand: 0,
+                averageCostPerUnit: 0,
+                totalInventoryValue: 0,
+                costOfGoodsSold: $costOfGoodsSold,
+            );
         }
 
-        return [
-            'quantity_on_hand' => $newQuantity,
-            'average_cost_per_unit' => $previousAverageCost,
-            'total_inventory_value' => $newTotalValue,
-            'cost_of_goods_sold' => $costOfGoodsSold,
-        ];
+        return new LedgerCalculationResult(
+            quantityOnHand: $newQuantity,
+            averageCostPerUnit: $previousAverageCost,
+            totalInventoryValue: $newTotalValue,
+            costOfGoodsSold: $costOfGoodsSold,
+        );
     }
 }
