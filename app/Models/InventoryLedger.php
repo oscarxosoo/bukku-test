@@ -6,6 +6,37 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property int $transaction_id
+ * @property int $product_id
+ * @property int $quantity_on_hand
+ * @property numeric $average_cost_per_unit
+ * @property numeric $total_inventory_value
+ * @property numeric|null $cost_of_goods_sold
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\Product $product
+ * @property-read \App\Models\Transaction $transaction
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereAverageCostPerUnit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereCostOfGoodsSold($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereProductId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereQuantityOnHand($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereTotalInventoryValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereTransactionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|InventoryLedger withoutTrashed()
+ * @mixin \Eloquent
+ */
 class InventoryLedger extends Model
 {
     use SoftDeletes;

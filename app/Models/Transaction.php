@@ -7,6 +7,35 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property string $transaction_type
+ * @property string $transaction_date
+ * @property int $quantity
+ * @property numeric $unit_price
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\InventoryLedger|null $inventoryLedger
+ * @property-read \App\Models\Product $product
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereProductId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereQuantity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereTransactionDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereTransactionType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereUnitPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Transaction withoutTrashed()
+ * @mixin \Eloquent
+ */
 class Transaction extends Model
 {
     use SoftDeletes;
