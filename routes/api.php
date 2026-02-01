@@ -20,5 +20,7 @@ Route::prefix('auth')->group(function () {
 Route::middleware('auth.jwt')->group(function () {
     Route::get('transactions', [TransactionController::class, 'index']);
     Route::post('transactions', [TransactionController::class, 'store']);
+    Route::put('transactions/{transaction}', [TransactionController::class, 'update']);
+    Route::delete('transactions/{transaction}', [TransactionController::class, 'destroy']);
 });
 
