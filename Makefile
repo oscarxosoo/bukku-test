@@ -20,6 +20,7 @@ help:
 	@echo "  make logs       - View container logs"
 	@echo "  make jwt-secret - Generate JWT secret key"
 	@echo "  make ide-helper - Regenerate IDE helper annotations"
+	@echo "  make test 	     - Run tests"
 
 # Complete setup for new developers
 setup: env install-initial build up jwt-secret migrate seed
@@ -110,3 +111,6 @@ logs:
 # Regenerate IDE helper annotations for models
 ide-helper:
 	$(SAIL) artisan ide-helper:models --write --no-interaction
+
+run-test:
+	$(SAIL) artisan test
