@@ -3,7 +3,8 @@
 namespace App\UseCases\Transactions;
 
 use App\DataTransferObjects\UpdateTransactionData;
-use App\Exceptions\BusinessValidationException;
+use App\Exceptions\Domain\ServiceException;
+use App\Exceptions\Http\BusinessValidationException;
 use App\Models\Transaction;
 use App\Services\InventoryLedger\RecalculateLedgerService;
 use App\Services\Transactions\TransactionRulesService;
@@ -26,14 +27,18 @@ class UpdateTransactionUseCase
         $productId = $transaction->product_id;
 
         return DB::transaction(function () use ($transaction, $data, $oldDate, $newDate, $productId) {
-            $transaction->update(array_filter($data->toArray(), fn ($value) => $value !== null));
+            try {
+                $transaction->update(array_filter($data->toArray(), fn ($value) => $value !== null));
 
-            $this->transactionRulesService->validateNoNegativeStock($productId);
+                $this->transactionRulesService->validateNoNegativeStock($productId);
 
-            $earliestDate = min($oldDate, $newDate);
-            $this->recalculateLedgerService->recalculateFromDate($productId, $earliestDate);
+                $earliestDate = min($oldDate, $newDate);
+                $this->recalculateLedgerService->recalculateFromDate($productId, $earliestDate);
 
-            return $transaction->fresh()->load('inventoryLedger');
+                return $transaction->fresh()->load('inventoryLedger');
+            } catch (ServiceException $e) {
+                throw new BusinessValidationException($e->getMessage());
+            }
         });
     }
 }

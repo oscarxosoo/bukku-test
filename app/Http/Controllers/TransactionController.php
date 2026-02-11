@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\DataTransferObjects\CreateTransactionData;
 use App\DataTransferObjects\ListTransactionFilter;
 use App\DataTransferObjects\UpdateTransactionData;
-use App\Exceptions\BusinessValidationException;
+use App\Exceptions\Http\BusinessValidationException;
 use App\Http\Requests\ListTransactionRequest;
 use App\Http\Requests\StoreTransactionRequest;
 use App\Http\Requests\UpdateTransactionRequest;

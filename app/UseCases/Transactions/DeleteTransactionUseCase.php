@@ -2,7 +2,8 @@
 
 namespace App\UseCases\Transactions;
 
-use App\Exceptions\BusinessValidationException;
+use App\Exceptions\Domain\ServiceException;
+use App\Exceptions\Http\BusinessValidationException;
 use App\Models\Transaction;
 use App\Services\InventoryLedger\RecalculateLedgerService;
 use App\Services\Transactions\TransactionRulesService;
@@ -15,6 +16,7 @@ class DeleteTransactionUseCase
         private TransactionRulesService $transactionRulesService
     ) {}
 
+
     /**
      * @throws BusinessValidationException
      */
@@ -24,12 +26,16 @@ class DeleteTransactionUseCase
         $transactionDate = $transaction->transaction_date;
 
         DB::transaction(function () use ($transaction, $productId, $transactionDate) {
-            $transaction->delete();
-            $transaction->inventoryLedger?->delete();
+            try {
+                $transaction->delete();
+                $transaction->inventoryLedger?->delete();
 
-            $this->transactionRulesService->validateNoNegativeStock($productId);
+                $this->transactionRulesService->validateNoNegativeStock($productId);
 
-            $this->recalculateLedgerService->recalculateFromDate($productId, $transactionDate);
+                $this->recalculateLedgerService->recalculateFromDate($productId, $transactionDate);
+            } catch (ServiceException $e) {
+                throw new BusinessValidationException($e->getMessage());
+            }
         });
     }
 }

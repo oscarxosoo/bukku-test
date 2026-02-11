@@ -3,7 +3,7 @@
 namespace App\Services\Transactions;
 
 use App\Constants\TransactionConstants;
-use App\Exceptions\BusinessValidationException;
+use App\Exceptions\Domain\ServiceException;
 use App\Models\InventoryLedger;
 use App\Models\Transaction;
 
@@ -13,23 +13,21 @@ class TransactionRulesService
      * Validate sufficient stock at a specific date for a sale.
      * Calculates what the stock would be just before the given date.
      *
-     * @throws BusinessValidationException
+     * @throws ServiceException
      */
     public function validateSufficientStockAtDate(int $productId, int $quantity, string $transactionDate): void
     {
         $stockAtDate = $this->calculateStockAtDate($productId, $transactionDate);
 
         if ($stockAtDate === 0) {
-            throw new BusinessValidationException(
-                'Inventory is empty at this date. No stock available for this product.',
-                'quantity'
+            throw new ServiceException(
+                'Inventory is empty at this date. No stock available for this product.'
             );
         }
 
         if ($quantity > $stockAtDate) {
-            throw new BusinessValidationException(
-                sprintf('Insufficient stock at this date. Available: %d, Requested: %d.', $stockAtDate, $quantity),
-                'quantity'
+            throw new ServiceException(
+                sprintf('Insufficient stock at this date. Available: %d, Requested: %d.', $stockAtDate, $quantity)
             );
         }
     }
@@ -54,7 +52,7 @@ class TransactionRulesService
      * Validate that recalculation won't cause negative stock.
      * Call this AFTER inserting/updating a transaction but BEFORE committing.
      *
-     * @throws BusinessValidationException
+     * @throws ServiceException
      */
     public function validateNoNegativeStock(int $productId): void
     {
@@ -72,14 +70,13 @@ class TransactionRulesService
                 $currentQuantity -= $transaction->quantity;
 
                 if ($currentQuantity < 0) {
-                    throw new BusinessValidationException(
+                    throw new ServiceException(
                         sprintf(
                             'This transaction would cause negative stock on %s. Available at that date: %d, Requested: %d.',
                             $transaction->transaction_date,
                             $currentQuantity + $transaction->quantity,
                             $transaction->quantity
-                        ),
-                        'quantity'
+                        )
                     );
                 }
             }
